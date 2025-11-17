@@ -23,15 +23,19 @@ nb_whisper_models = {}
 default_model_size = "large"
 available_model_sizes = ["tiny", "base", "small", "medium", "large"]
 
+# Global NB-Llama model storage
+nb_llama_model = None
+nb_llama_tokenizer = None
+
 
 async def load_global_models():
-    """Load all NB-Whisper models globally at startup."""
-    global nb_whisper_models
+    """Load all NB-Whisper models and NB-Llama model globally at startup."""
+    global nb_whisper_models, nb_llama_model, nb_llama_tokenizer
 
-    logger.info("Loading all NB-Whisper models for multi-model support...")
+    logger.info("Loading Norwegian AI models: NB-Whisper + NB-Llama...")
 
     try:
-        from transformers import pipeline
+        from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer
         import torch
 
         # Auto-detect best device: MPS (Apple Silicon) > CUDA (NVIDIA) > CPU
@@ -74,12 +78,37 @@ async def load_global_models():
         logger.info(f"Loaded {loaded_count}/{len(available_model_sizes)} NB-Whisper models on {device_name}")
 
         if loaded_count == 0:
-            raise Exception("No models were loaded successfully")
+            raise Exception("No NB-Whisper models were loaded successfully")
 
-        logger.info("Multi-model system ready for direct processing")
+        # Load NB-Llama model using same device
+        logger.info("Loading NB-Llama model for conversational AI...")
+
+        try:
+            model_name = "NbAiLab/nb-llama-3.1-8B-Instruct"
+            logger.info(f"Loading NB-Llama tokenizer: {model_name}")
+
+            nb_llama_tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+            logger.info(f"Loading NB-Llama model: {model_name} on {device}")
+            nb_llama_model = AutoModelForCausalLM.from_pretrained(
+                model_name,
+                device_map=device,
+                torch_dtype=torch.float16
+            )
+
+            logger.info(f"✓ NB-Llama model loaded successfully on {device_name}")
+
+        except Exception as e:
+            logger.error(f"✗ Failed to load NB-Llama model: {e}")
+            logger.warning("Chat functionality will not be available")
+
+        # Summary of loaded models
+        nb_llama_status = "ready" if nb_llama_model is not None else "failed"
+        logger.info(f"Norwegian AI models loaded - NB-Whisper: {loaded_count} models, NB-Llama: {nb_llama_status}")
+        logger.info("Multi-model system ready for speech recognition and chat")
 
     except Exception as e:
-        logger.error(f"Failed to load NB-Whisper models: {e}")
+        logger.error(f"Failed to load Norwegian AI models: {e}")
         raise
 
 
@@ -155,12 +184,17 @@ async def health_check():
 
         # Show status of each loaded model
         services = {}
-        global nb_whisper_models
+        global nb_whisper_models, nb_llama_model
+
+        # NB-Whisper model status
         for model_size in available_model_sizes:
             if model_size in nb_whisper_models:
                 services[f"nb_whisper_{model_size}"] = "ready"
             else:
                 services[f"nb_whisper_{model_size}"] = "not_loaded"
+
+        # NB-Llama model status
+        services["nb_llama_8b"] = "ready" if nb_llama_model is not None else "not_loaded"
 
         return HealthResponse(
             status="healthy" if processor_status else "degraded",
