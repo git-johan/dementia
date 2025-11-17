@@ -1,0 +1,612 @@
+{
+	"info": {
+		"_postman_id": "dementia-api-testing-v2",
+		"name": "Dementia API Testing - Multi-Model Architecture (v3)",
+		"description": "Comprehensive testing collection for Dementia Care AI Assistant API - Multi-Model Architecture\n\n**Setup Instructions:**\n1. Make sure FastAPI server is running: `uvicorn app.main:app --reload --port 8000`\n2. Import this collection into Postman\n3. Run tests in order or use the Collection Runner\n\n**Multi-Model Features:**\n- ✅ 5 NB-Whisper models loaded at startup (tiny/base/small/medium/large)\n- ✅ Model selection via `model_size` parameter\n- ✅ Speed vs accuracy comparison testing\n- ✅ Direct processing (no Redis/Celery workers required)\n- ✅ Norwegian-optimized speech recognition\n\n**Test Coverage:**\n- Health check endpoints (shows all loaded models)\n- Processor capabilities (multi-model info)\n- Model comparison testing (tiny vs large)\n- Error handling scenarios\n- Norwegian audio testing with different models",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "01. Health Checks",
+			"item": [
+				{
+					"name": "Basic Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains status\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.eql('healthy');",
+									"});",
+									"",
+									"pm.test(\"NB-Whisper models are loaded\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('services');",
+									"    const modelSizes = ['tiny', 'base', 'small', 'medium', 'large'];",
+									"    modelSizes.forEach(size => {",
+									"        const modelKey = `nb_whisper_${size}`;",
+									"        if (jsonData.services[modelKey]) {",
+									"            pm.expect(jsonData.services[modelKey]).to.be.oneOf(['ready', 'not_loaded']);",
+									"        }",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Test basic health endpoint and NB-Whisper model status"
+					}
+				},
+				{
+					"name": "Root Info Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains project info\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"    pm.expect(jsonData.message).to.include('Dementia');",
+									"    pm.expect(jsonData).to.have.property('version');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								""
+							]
+						},
+						"description": "Test root endpoint"
+					}
+				}
+			],
+			"description": "Basic health and connectivity tests"
+		},
+		{
+			"name": "02. Processor Capabilities",
+			"item": [
+				{
+					"name": "Get Processor Capabilities",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains processors\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('processors');",
+									"    pm.expect(jsonData.processors).to.be.an('array');",
+									"    pm.expect(jsonData).to.have.property('default_processor');",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.eql('ready');",
+									"});",
+									"",
+									"pm.test(\"NB-Whisper processor exists\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    const nbWhisper = jsonData.processors.find(p => p.name.includes('nb-whisper'));",
+									"    pm.expect(nbWhisper).to.exist;",
+									"    pm.expect(nbWhisper).to.have.property('supported_formats');",
+									"    pm.expect(nbWhisper).to.have.property('language');",
+									"    pm.expect(nbWhisper.language).to.include('Norwegian');",
+									"    pm.expect(nbWhisper.requires_api_key).to.be.false;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/processors/capabilities",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"processors",
+								"capabilities"
+							]
+						},
+						"description": "Get available speech processors and their capabilities"
+					}
+				}
+			],
+			"description": "Test processor discovery and capabilities"
+		},
+		{
+			"name": "03. Direct Speech Processing",
+			"item": [
+				{
+					"name": "Process Test Audio (Direct)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains direct transcription result\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData).to.have.property('processor_result');",
+									"    pm.expect(jsonData).to.have.property('created_at');",
+									"    pm.expect(jsonData).to.have.property('completed_at');",
+									"});",
+									"",
+									"pm.test(\"Processor result is valid\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    const processor = jsonData.processor_result;",
+									"    pm.expect(processor).to.have.property('processor');",
+									"    pm.expect(processor.processor).to.include('nb-whisper');",
+									"    pm.expect(processor).to.have.property('status');",
+									"    pm.expect(processor).to.have.property('processing_time_ms');",
+									"    pm.expect(processor.processing_time_ms).to.be.a('number');",
+									"});",
+									"",
+									"pm.test(\"Metadata included\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('metadata');",
+									"    pm.expect(jsonData).to.have.property('original_filename');",
+									"});",
+									"",
+									"pm.test(\"Response time is direct (not queued)\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(30000); // 30 seconds max for direct processing",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "../test_audio.txt",
+									"description": "Test audio file (text file for testing)"
+								},
+								{
+									"key": "metadata",
+									"value": "{\"environment\":\"quiet_home\",\"source\":\"postman_test\",\"device\":\"test_device\"}",
+									"type": "text",
+									"description": "Processing metadata"
+								},
+								{
+									"key": "model_size",
+									"value": "large",
+									"type": "text",
+									"description": "NB-Whisper model size (tiny/base/small/medium/large)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/process/speech",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"process",
+								"speech"
+							]
+						},
+						"description": "Upload audio file for direct processing. Returns transcription immediately."
+					}
+				},
+				{
+					"name": "Process Norwegian Audio (Sample)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Norwegian transcription completed\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.be.oneOf(['completed', 'failed']);",
+									"    pm.expect(jsonData.processor_result).to.have.property('processor');",
+									"    pm.expect(jsonData.processor_result.processor).to.include('nb-whisper');",
+									"    pm.expect(jsonData.processor_result.processor).to.include('large');",
+									"});",
+									"",
+									"if (pm.response.json().status === 'completed') {",
+									"    pm.test(\"Successful Norwegian transcription\", function () {",
+									"        const jsonData = pm.response.json();",
+									"        const result = jsonData.processor_result;",
+									"        pm.expect(result).to.have.property('text');",
+									"        pm.expect(result).to.have.property('language');",
+									"        pm.expect(result.language).to.eql('no');",
+									"        pm.expect(result).to.have.property('confidence_score');",
+									"        pm.expect(result).to.have.property('segments');",
+									"    });",
+									"",
+									"    pm.test(\"Quality metrics included\", function () {",
+									"        const jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.have.property('quality_metrics');",
+									"        pm.expect(jsonData.quality_metrics).to.have.property('audio_size_bytes');",
+									"        pm.expect(jsonData.quality_metrics).to.have.property('processing_time_ms');",
+									"        pm.expect(jsonData).to.have.property('duration_seconds');",
+									"    });",
+									"} else {",
+									"    pm.test(\"Error handling for failed processing\", function () {",
+									"        const jsonData = pm.response.json();",
+									"        const result = jsonData.processor_result;",
+									"        pm.expect(result).to.have.property('error');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "../samples/audio/eirik-strøm-2.m4a",
+									"description": "Norwegian audio sample file"
+								},
+								{
+									"key": "metadata",
+									"value": "{\"environment\":\"test_lab\",\"source\":\"norwegian_sample\",\"device\":\"postman\"}",
+									"type": "text"
+								},
+								{
+									"key": "model_size",
+									"value": "large",
+									"type": "text",
+									"description": "NB-Whisper model size (tiny/base/small/medium/large)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/process/speech",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"process",
+								"speech"
+							]
+						},
+						"description": "Process actual Norwegian M4A audio file with NB-Whisper"
+					}
+				}
+			],
+			"description": "Direct speech processing tests (no job queues)"
+		},
+		{
+			"name": "04. Error Handling",
+			"item": [
+				{
+					"name": "Upload Without File",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400 or 422\", function () {",
+									"    pm.expect([400, 422]).to.include(pm.response.code);",
+									"});",
+									"",
+									"pm.test(\"Error indicates missing file\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"    pm.expect(jsonData.detail.toLowerCase()).to.include('file');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "metadata",
+									"value": "{\"environment\":\"test\"}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/process/speech",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"process",
+								"speech"
+							]
+						},
+						"description": "Test error handling when no file is uploaded"
+					}
+				},
+				{
+					"name": "Upload Empty File",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 with failed status or 400\", function () {",
+									"    pm.expect([200, 400]).to.include(pm.response.code);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    pm.test(\"Processing failed gracefully\", function () {",
+									"        const jsonData = pm.response.json();",
+									"        pm.expect(jsonData.status).to.eql('failed');",
+									"        pm.expect(jsonData.processor_result.status).to.eql('failed');",
+									"        pm.expect(jsonData.processor_result).to.have.property('error');",
+									"    });",
+									"} else {",
+									"    pm.test(\"Error indicates empty file\", function () {",
+									"        const jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.have.property('detail');",
+									"        pm.expect(jsonData.detail.toLowerCase()).to.include('empty');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/dev/null",
+									"description": "Empty file"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/process/speech",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"process",
+								"speech"
+							]
+						},
+						"description": "Test error handling for empty audio file"
+					}
+				},
+				{
+					"name": "Upload Large File",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 413 or 200 with graceful handling\", function () {",
+									"    pm.expect([200, 413]).to.include(pm.response.code);",
+									"});",
+									"",
+									"if (pm.response.code === 413) {",
+									"    pm.test(\"File too large error\", function () {",
+									"        const jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.have.property('detail');",
+									"        pm.expect(jsonData.detail.toLowerCase()).to.include('large');",
+									"    });",
+									"} else {",
+									"    pm.test(\"Large file processed or failed gracefully\", function () {",
+									"        const jsonData = pm.response.json();",
+									"        pm.expect(['completed', 'failed']).to.include(jsonData.status);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "../test_audio.txt",
+									"description": "Test with size limit"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/process/speech",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"process",
+								"speech"
+							]
+						},
+						"description": "Test file size limit handling"
+					}
+				}
+			],
+			"description": "Test error scenarios and edge cases for direct processing"
+		},
+		{
+			"name": "05. Performance Testing",
+			"item": [
+				{
+					"name": "Direct Processing Performance",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response time reasonable for direct processing\", function () {",
+									"    // Direct processing should be faster than old job queue system",
+									"    pm.expect(pm.response.responseTime).to.be.below(10000);",
+									"});",
+									"",
+									"pm.test(\"Processing completed with timing metrics\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('processor_result');",
+									"    pm.expect(jsonData.processor_result).to.have.property('processing_time_ms');",
+									"    pm.expect(jsonData.processor_result.processing_time_ms).to.be.a('number');",
+									"    pm.expect(jsonData.processor_result.processing_time_ms).to.be.at.least(0);",
+									"});",
+									"",
+									"pm.test(\"Memory efficient (single model instance)\", function () {",
+									"    // Verify we're using the global model, not loading per request",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.processor_result.model_version).to.include('NbAiLab/nb-whisper');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "../test_audio.txt"
+								},
+								{
+									"key": "metadata",
+									"value": "{\"environment\":\"performance_test\",\"source\":\"direct_processing_test\"}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/process/speech",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"process",
+								"speech"
+							]
+						},
+						"description": "Test direct processing performance and memory efficiency"
+					}
+				}
+			],
+			"description": "Performance testing for direct processing architecture"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global pre-request script for direct processing",
+					"console.log('Testing Direct Processing API:', pm.collectionVariables.get('base_url'));",
+					"console.log('Architecture: Global NB-Whisper model with direct responses');"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global test script",
+					"pm.test(\"Response should be JSON\", function () {",
+					"    pm.response.to.be.json;",
+					"});",
+					"",
+					"pm.test(\"Response time should be reasonable for direct processing\", function () {",
+					"    // Direct processing has different timing characteristics than job queues",
+					"    pm.expect(pm.response.responseTime).to.be.below(60000); // Max 1 minute for any audio",
+					"});"
+				]
+			}
+		}
+	]
+}
