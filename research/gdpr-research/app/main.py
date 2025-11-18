@@ -23,20 +23,21 @@ nb_whisper_models = {}
 default_model_size = "large"
 available_model_sizes = ["tiny", "base", "small", "medium", "large"]
 
-# Global NB-Llama model storage
-nb_llama_model = None
-nb_llama_tokenizer = None
+# Global Ollama client for Norwegian AI
+ollama_client = None
+ollama_model = "llama3.1:8b"  # Using Llama 3.1 8B for Norwegian conversational AI
 
 
 async def load_global_models():
-    """Load all NB-Whisper models and NB-Llama model globally at startup."""
-    global nb_whisper_models, nb_llama_model, nb_llama_tokenizer
+    """Load all NB-Whisper models and initialize Ollama client globally at startup."""
+    global nb_whisper_models, ollama_client
 
-    logger.info("Loading Norwegian AI models: NB-Whisper + NB-Llama...")
+    logger.info("Loading Norwegian AI models: NB-Whisper + Ollama...")
 
     try:
-        from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer
+        from transformers import pipeline
         import torch
+        import ollama
 
         # Auto-detect best device: MPS (Apple Silicon) > CUDA (NVIDIA) > CPU
         logger.info(f"Checking device availability...")
@@ -56,7 +57,7 @@ async def load_global_models():
 
         logger.info(f"Selected device: {device_name} ({device})")
 
-        # Load all 5 model sizes
+        # Load all 5 NB-Whisper model sizes
         for model_size in available_model_sizes:
             model_name = f"NbAiLab/nb-whisper-{model_size}"
             logger.info(f"Loading {model_size} model: {model_name}")
@@ -80,31 +81,42 @@ async def load_global_models():
         if loaded_count == 0:
             raise Exception("No NB-Whisper models were loaded successfully")
 
-        # Load NB-Llama model using same device
-        logger.info("Loading NB-Llama model for conversational AI...")
+        # Initialize Ollama client for Norwegian conversational AI
+        logger.info("Initializing Ollama client for conversational AI...")
 
         try:
-            model_name = "NbAiLab/nb-llama-3.1-8B-Instruct"
-            logger.info(f"Loading NB-Llama tokenizer: {model_name}")
+            # Create Ollama client
+            ollama_client = ollama.Client()
 
-            nb_llama_tokenizer = AutoTokenizer.from_pretrained(model_name)
+            # Test connection and model availability
+            models_list = ollama_client.list()
+            available_models = [model.get('name', model.get('model', '')) for model in models_list.get('models', [])]
 
-            logger.info(f"Loading NB-Llama model: {model_name} on {device}")
-            nb_llama_model = AutoModelForCausalLM.from_pretrained(
-                model_name,
-                device_map=device,
-                torch_dtype=torch.float16
-            )
+            if ollama_model in available_models:
+                logger.info(f"✓ Ollama model '{ollama_model}' is available")
 
-            logger.info(f"✓ NB-Llama model loaded successfully on {device_name}")
+                # Test the model with a simple Norwegian question
+                test_response = ollama_client.chat(
+                    model=ollama_model,
+                    messages=[{"role": "user", "content": "Kan du svare på norsk?"}]
+                )
+
+                logger.info("✓ Ollama model tested successfully with Norwegian response")
+                logger.info(f"Norwegian AI ready with Llama 3.1 8B via Ollama")
+
+            else:
+                logger.warning(f"Ollama model '{ollama_model}' not found in: {available_models}")
+                logger.info(f"To install the model, run: ollama pull {ollama_model}")
+                ollama_client = None
 
         except Exception as e:
-            logger.error(f"✗ Failed to load NB-Llama model: {e}")
-            logger.warning("Chat functionality will not be available")
+            logger.error(f"✗ Failed to initialize Ollama client: {e}")
+            logger.warning("Chat functionality will not be available - ensure Ollama is running")
+            ollama_client = None
 
         # Summary of loaded models
-        nb_llama_status = "ready" if nb_llama_model is not None else "failed"
-        logger.info(f"Norwegian AI models loaded - NB-Whisper: {loaded_count} models, NB-Llama: {nb_llama_status}")
+        ollama_status = "ready" if ollama_client is not None else "failed"
+        logger.info(f"Norwegian AI models loaded - NB-Whisper: {loaded_count} models, Ollama: {ollama_status}")
         logger.info("Multi-model system ready for speech recognition and chat")
 
     except Exception as e:
@@ -155,6 +167,10 @@ app.add_middleware(
 # Include API routers
 app.include_router(speech.router)
 
+# Import and include chat router (for NB-Llama integration)
+from app.api import chat
+app.include_router(chat.router)
+
 
 @app.get("/", include_in_schema=False)
 async def root():
@@ -184,7 +200,7 @@ async def health_check():
 
         # Show status of each loaded model
         services = {}
-        global nb_whisper_models, nb_llama_model
+        global nb_whisper_models, ollama_client
 
         # NB-Whisper model status
         for model_size in available_model_sizes:
@@ -193,8 +209,8 @@ async def health_check():
             else:
                 services[f"nb_whisper_{model_size}"] = "not_loaded"
 
-        # NB-Llama model status
-        services["nb_llama_8b"] = "ready" if nb_llama_model is not None else "not_loaded"
+        # Ollama model status
+        services["ollama_chat"] = "ready" if ollama_client is not None else "not_loaded"
 
         return HealthResponse(
             status="healthy" if processor_status else "degraded",
@@ -209,13 +225,14 @@ async def health_check():
 
 
 async def _check_processor_status() -> bool:
-    """Check speech processor health.
+    """Check speech and chat processor health.
 
     Returns:
         True if at least one NB-Whisper model is loaded
     """
     try:
         global nb_whisper_models
+        # Consider system healthy if NB-Whisper is working (NB-Llama is optional)
         return len(nb_whisper_models) > 0
 
     except Exception as e:

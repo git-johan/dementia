@@ -1,0 +1,68 @@
+{
+  "norwegian_health_authorities": {
+    "helsedirektoratet.no": {
+      "priority": "high",
+      "focus": "official_guidelines",
+      "description": "Norwegian Directorate of Health - official health authority",
+      "content_types": ["guidelines", "policy_documents", "recommendations"],
+      "language": "norwegian"
+    },
+    "fhi.no": {
+      "priority": "high",
+      "focus": "research_findings",
+      "description": "Norwegian Institute of Public Health - research and surveillance",
+      "content_types": ["research", "surveillance_data", "evidence_based_guidelines"],
+      "language": "norwegian"
+    },
+    "aldringoghelse.no": {
+      "priority": "medium",
+      "focus": "care_guidance",
+      "description": "Norwegian Centre for Ageing and Health",
+      "content_types": ["care_guidance", "family_support", "aging_health"],
+      "language": "norwegian"
+    },
+    "nasjonalforeningen.no": {
+      "priority": "medium",
+      "focus": "patient_advocacy",
+      "description": "National Association for Public Health - patient advocacy",
+      "content_types": ["patient_support", "practical_care", "advocacy"],
+      "language": "norwegian"
+    }
+  },
+  "international_sources": {
+    "who.int": {
+      "priority": "low",
+      "focus": "global_standards",
+      "description": "World Health Organization - global health standards",
+      "content_types": ["global_guidelines", "international_standards"],
+      "language": "english",
+      "path_filters": ["/news-room/fact-sheets/", "/health-topics/dementia"]
+    },
+    "alzheimer-europe.org": {
+      "priority": "low",
+      "focus": "european_research",
+      "description": "Alzheimer Europe - European research and advocacy",
+      "content_types": ["european_research", "policy_advocacy"],
+      "language": "english"
+    },
+    "alz.org": {
+      "priority": "low",
+      "focus": "international_best_practices",
+      "description": "Alzheimer's Association - international best practices",
+      "content_types": ["best_practices", "research_updates"],
+      "language": "english",
+      "path_filters": ["/research/", "/professionals/"]
+    }
+  },
+  "research_settings": {
+    "max_pages_per_domain": {
+      "high": 50,
+      "medium": 25,
+      "low": 10
+    },
+    "crawl_delay_seconds": 1.0,
+    "content_min_length": 500,
+    "content_max_age_days": 730,
+    "quality_threshold": 0.7
+  }
+}

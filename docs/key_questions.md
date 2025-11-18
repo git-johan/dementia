@@ -15,3 +15,5 @@
   [ ] Hvordan organiserer vi informasjonen for at RAG skal klare å hente frem riktig info raskt?
   [ ] Hvordan gjør vi interaksjonen menneskelig og ekte?
   [ ] Hvordan gjør vi det troverdig?
+  [ ] Hvilken modell fungerer best som samtalepartner på norsk?
+  * Det er stort spenn i hvilke modeller som fungerer bra på norsk. Her må vi mest sannsynlig svelge noen kameler – eller investere ekstremt mye tid.

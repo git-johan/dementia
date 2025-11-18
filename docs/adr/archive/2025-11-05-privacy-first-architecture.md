@@ -1,6 +1,7 @@
 # ADR: Privacy-First Architecture
 
-**Status:** Accepted
+**Status:** Archived (Superseded by Commercial LLM Strategy ADR 2025-11-18)
+**Research Implementation:** See `research/gdpr-research/` for working implementation of this architecture
 **Date:** 2025-11-05
 **Deciders:** Johan Josok
 
@@ -68,6 +69,12 @@ privacy_architecture = {
 - Higher infrastructure responsibility vs cloud APIs
 - Local model management vs managed services
 - EU/Norwegian hosting costs vs global cloud pricing
+
+### Research Implementation Status
+The privacy-first architecture was successfully implemented and can be found in:
+- **Core Implementation**: `research/gdpr-research/app/` - FastAPI backend with NB-Llama and NB-Whisper
+- **Testing Results**: `research/gdpr-research/tests/` - Validation of Norwegian language capabilities
+- **Research Findings**: Led to quality gap identification that informed commercial LLM pivot
 
 ## Privacy-by-Design Implementation
 

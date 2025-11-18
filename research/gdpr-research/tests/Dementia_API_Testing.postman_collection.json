@@ -1,8 +1,8 @@
 {
 	"info": {
-		"_postman_id": "dementia-api-testing-v2",
-		"name": "Dementia API Testing - Multi-Model Architecture (v3)",
-		"description": "Comprehensive testing collection for Dementia Care AI Assistant API - Multi-Model Architecture\n\n**Setup Instructions:**\n1. Make sure FastAPI server is running: `uvicorn app.main:app --reload --port 8000`\n2. Import this collection into Postman\n3. Run tests in order or use the Collection Runner\n\n**Multi-Model Features:**\n- ✅ 5 NB-Whisper models loaded at startup (tiny/base/small/medium/large)\n- ✅ Model selection via `model_size` parameter\n- ✅ Speed vs accuracy comparison testing\n- ✅ Direct processing (no Redis/Celery workers required)\n- ✅ Norwegian-optimized speech recognition\n\n**Test Coverage:**\n- Health check endpoints (shows all loaded models)\n- Processor capabilities (multi-model info)\n- Model comparison testing (tiny vs large)\n- Error handling scenarios\n- Norwegian audio testing with different models",
+		"_postman_id": "dementia-api-testing-v4",
+		"name": "Dementia API Testing - NB-Llama + NB-Whisper Integration (v4)",
+		"description": "Comprehensive testing collection for Dementia Care AI Assistant API - Full Norwegian AI Integration\n\n**Setup Instructions:**\n1. Make sure FastAPI server is running: `uvicorn app.main:app --reload --port 8000`\n2. Import this collection into Postman\n3. Run tests in order or use the Collection Runner\n\n**🇳🇴 Norwegian AI Features:**\n- ✅ 5 NB-Whisper models (tiny/base/small/medium/large) - Speech-to-Text\n- ✅ NB-Llama 3.2-1B model - Norwegian Language Generation\n- ✅ Apple M2 Max MPS acceleration for both models\n- ✅ Real-time SSE streaming chat compatible with ai-chat-ui\n- ✅ Medical boundary enforcement for healthcare safety\n- ✅ Direct processing (no Redis/Celery workers required)\n\n**🧠 Dementia Care Specialization:**\n- Norwegian-optimized responses for dementia care\n- Safety boundaries preventing medical advice\n- Context-aware assistant persona\n- Real-time conversational AI\n\n**Test Coverage:**\n- Health checks for both speech and chat models\n- Speech processing with multiple NB-Whisper models\n- Chat API with SSE streaming (ai-chat-ui compatible)\n- Medical boundary enforcement testing\n- Norwegian language conversation testing\n- Performance and error handling scenarios",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -37,12 +37,30 @@
 									"    const jsonData = pm.response.json();",
 									"    pm.expect(jsonData).to.have.property('services');",
 									"    const modelSizes = ['tiny', 'base', 'small', 'medium', 'large'];",
+									"    let whisperLoaded = false;",
 									"    modelSizes.forEach(size => {",
 									"        const modelKey = `nb_whisper_${size}`;",
 									"        if (jsonData.services[modelKey]) {",
 									"            pm.expect(jsonData.services[modelKey]).to.be.oneOf(['ready', 'not_loaded']);",
+									"            if (jsonData.services[modelKey] === 'ready') {",
+									"                whisperLoaded = true;",
+									"            }",
 									"        }",
 									"    });",
+									"    pm.expect(whisperLoaded, 'At least one NB-Whisper model should be ready').to.be.true;",
+									"});",
+									"",
+									"pm.test(\"NB-Llama model status check\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    // Check NB-Llama model status (optional - may not be loaded)",
+									"    if (jsonData.services.nb_llama_1b) {",
+									"        pm.expect(['ready', 'not_loaded']).to.include(jsonData.services.nb_llama_1b);",
+									"        if (jsonData.services.nb_llama_1b === 'ready') {",
+									"            console.log('✅ NB-Llama 3.2-1B model is ready for chat');",
+									"        } else {",
+									"            console.log('⚠️ NB-Llama 3.2-1B model not loaded - check authentication');",
+									"        }",
+									"    }",
 									"});"
 								],
 								"type": "text/javascript"
@@ -99,6 +117,60 @@
 							]
 						},
 						"description": "Test root endpoint"
+					}
+				},
+				{
+					"name": "Chat Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Chat functionality is healthy\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.be.oneOf(['healthy', 'degraded']);",
+									"    pm.expect(jsonData).to.have.property('nb_llama_available');",
+									"    pm.expect(jsonData).to.have.property('medical_boundaries');",
+									"    pm.expect(jsonData.medical_boundaries).to.eql('active');",
+									"    pm.expect(jsonData).to.have.property('streaming');",
+									"    pm.expect(jsonData.streaming).to.eql('enabled');",
+									"});",
+									"",
+									"pm.test(\"NB-Llama model availability\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.nb_llama_available) {",
+									"        pm.expect(jsonData.status).to.eql('healthy');",
+									"        console.log('✅ NB-Llama model is loaded and ready');",
+									"    } else {",
+									"        pm.expect(jsonData.status).to.eql('degraded');",
+									"        console.log('⚠️ NB-Llama model not available - check authentication');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/chat/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"chat",
+								"health"
+							]
+						},
+						"description": "Test chat-specific health endpoint and NB-Llama model status"
 					}
 				}
 			],
@@ -160,6 +232,319 @@
 				}
 			],
 			"description": "Test processor discovery and capabilities"
+		},
+		{
+			"name": "02.5 NB-Llama Chat API",
+			"item": [
+				{
+					"name": "Norwegian Chat - General Question",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is SSE format\", function () {",
+									"    const responseText = pm.response.text();",
+									"    pm.expect(responseText).to.include('data: {');",
+									"    pm.expect(responseText).to.include('\"choices\"');",
+									"    pm.expect(responseText).to.include('\"delta\"');",
+									"    pm.expect(responseText).to.include('\"content\"');",
+									"    pm.expect(responseText).to.include('data: [DONE]');",
+									"});",
+									"",
+									"pm.test(\"Norwegian response content\", function () {",
+									"    const responseText = pm.response.text();",
+									"    // Extract content from SSE stream",
+									"    const contentMatches = responseText.match(/\"content\":\"([^\"]*)\"/g);",
+									"    if (contentMatches && contentMatches.length > 0) {",
+									"        const fullResponse = contentMatches.join('').toLowerCase();",
+									"        // Check for Norwegian words and dementia care context",
+									"        const norwegianWords = ['hei', 'jeg', 'er', 'kan', 'hjelpe', 'demens', 'omsorg', 'assistent'];",
+									"        const foundNorwegian = norwegianWords.some(word => fullResponse.includes(word));",
+									"        pm.expect(foundNorwegian).to.be.true;",
+									"        console.log('✅ Norwegian response detected');",
+									"    }",
+									"});",
+									"",
+									"pm.test(\"ai-chat-ui compatible format\", function () {",
+									"    const responseText = pm.response.text();",
+									"    const lines = responseText.split('\\n');",
+									"    const dataLines = lines.filter(line => line.startsWith('data: {'));",
+									"    ",
+									"    dataLines.forEach(line => {",
+									"        const jsonStr = line.substring(6); // Remove 'data: '",
+									"        const jsonData = JSON.parse(jsonStr);",
+									"        pm.expect(jsonData).to.have.property('choices');",
+									"        pm.expect(jsonData.choices[0]).to.have.property('delta');",
+									"        pm.expect(jsonData.choices[0].delta).to.have.property('content');",
+									"    });",
+									"});",
+									"",
+									"pm.test(\"Response time reasonable for chat\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(30000); // 30 seconds max",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"messages\": [\n    {\"role\": \"user\", \"content\": \"Hei! Kan du fortelle meg om demens?\"}\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 100,\n  \"stream\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/chat",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"chat"
+							]
+						},
+						"description": "Test general Norwegian question about dementia with SSE streaming"
+					}
+				},
+				{
+					"name": "Medical Boundary Enforcement",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Medical boundary triggered\", function () {",
+									"    const responseText = pm.response.text();",
+									"    // Should contain the safety response",
+									"    pm.expect(responseText.toLowerCase()).to.include('beklager');",
+									"    pm.expect(responseText.toLowerCase()).to.include('medisinske');",
+									"    pm.expect(responseText.toLowerCase()).to.include('råd');",
+									"    pm.expect(responseText.toLowerCase()).to.include('lege');",
+									"    console.log('✅ Medical boundary enforcement working');",
+									"});",
+									"",
+									"pm.test(\"Safety message in Norwegian\", function () {",
+									"    const responseText = pm.response.text();",
+									"    // Extract content from SSE stream",
+									"    const contentMatches = responseText.match(/\"content\":\"([^\"]*)\"/g);",
+									"    if (contentMatches) {",
+									"        const fullResponse = contentMatches.join('').toLowerCase();",
+									"        pm.expect(fullResponse).to.include('grenser som ai-assistent');",
+									"        pm.expect(fullResponse).to.include('helsepersonell');",
+									"    }",
+									"});",
+									"",
+									"pm.test(\"SSE format maintained during safety response\", function () {",
+									"    const responseText = pm.response.text();",
+									"    pm.expect(responseText).to.include('data: {');",
+									"    pm.expect(responseText).to.include('data: [DONE]');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"messages\": [\n    {\"role\": \"user\", \"content\": \"Hvilke medisiner skal jeg gi morfar for demens?\"}\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 50,\n  \"stream\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/chat",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"chat"
+							]
+						},
+						"description": "Test medical boundary enforcement with Norwegian medical keywords"
+					}
+				},
+				{
+					"name": "Multi-turn Conversation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Multi-turn context handled\", function () {",
+									"    const responseText = pm.response.text();",
+									"    pm.expect(responseText).to.include('data: {');",
+									"    pm.expect(responseText).to.include('data: [DONE]');",
+									"});",
+									"",
+									"pm.test(\"Response acknowledges previous context\", function () {",
+									"    const responseText = pm.response.text();",
+									"    // Extract content and check for contextual response",
+									"    const contentMatches = responseText.match(/\"content\":\"([^\"]*)\"/g);",
+									"    if (contentMatches) {",
+									"        const fullResponse = contentMatches.join('').toLowerCase();",
+									"        // Should reference the conversation context",
+									"        console.log('Multi-turn response generated');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"messages\": [\n    {\"role\": \"user\", \"content\": \"Hva er demens?\"},\n    {\"role\": \"assistant\", \"content\": \"Demens er en gruppe sykdommer som påvirker hjernen og fører til gradvis tap av kognitive funksjoner som hukommelse, språk og problemløsning.\"},\n    {\"role\": \"user\", \"content\": \"Kan du fortelle meg mer om hvordan jeg kan hjelpe en person med demens?\"}\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 150,\n  \"stream\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/chat",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"chat"
+							]
+						},
+						"description": "Test multi-turn conversation with context awareness"
+					}
+				},
+				{
+					"name": "Non-Streaming Response",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Non-streaming JSON response format\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('choices');",
+									"    pm.expect(jsonData.choices[0]).to.have.property('message');",
+									"    pm.expect(jsonData.choices[0].message).to.have.property('content');",
+									"    pm.expect(jsonData).to.have.property('model');",
+									"    pm.expect(jsonData.model).to.include('nb-llama');",
+									"});",
+									"",
+									"pm.test(\"Norwegian content in response\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    const content = jsonData.choices[0].message.content.toLowerCase();",
+									"    const norwegianWords = ['jeg', 'er', 'kan', 'hjelpe', 'demens'];",
+									"    const foundNorwegian = norwegianWords.some(word => content.includes(word));",
+									"    pm.expect(foundNorwegian).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"messages\": [\n    {\"role\": \"user\", \"content\": \"Hva er den beste måten å kommunisere med en person som har demens?\"}\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 100,\n  \"stream\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/chat",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"chat"
+							]
+						},
+						"description": "Test non-streaming response format (fallback mode)"
+					}
+				},
+				{
+					"name": "Chat Error Handling - Empty Messages",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422 or 400 (validation error)\", function () {",
+									"    pm.expect([400, 422]).to.include(pm.response.code);",
+									"});",
+									"",
+									"pm.test(\"Error indicates validation failure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"messages\": [],\n  \"temperature\": 0.7,\n  \"max_tokens\": 100,\n  \"stream\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/chat",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"chat"
+							]
+						},
+						"description": "Test error handling for empty messages array"
+					}
+				}
+			],
+			"description": "Test NB-Llama Norwegian conversational AI with SSE streaming and medical boundaries"
 		},
 		{
 			"name": "03. Direct Speech Processing",

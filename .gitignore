@@ -96,6 +96,15 @@ docs/temp-research/
 research-data/
 analysis-temp/
 
+# Research project specific files
+research/*/data/*.db
+research/*/data/*.sqlite
+research/*/data/*.sqlite3
+research/*/data/samples/*.json
+research/*/data/samples/*.html
+research/gdpr-research/venv/
+research/trusted-sources/data/research.db
+
 # OS generated files
 Thumbs.db
 ehthumbs.db
