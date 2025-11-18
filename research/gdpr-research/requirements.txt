@@ -1,29 +1,29 @@
 # Core FastAPI stack
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-pydantic==2.4.2
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.4.0
+pydantic-settings>=2.0.0
 
-# Speech processing
-openai-whisper==20231117
-transformers==4.35.0
-torch==2.1.0
+# Norwegian AI models
+transformers>=4.35.0
+torch>=2.1.0
+ollama>=0.6.0
 
 # Audio processing
-ffmpeg-python==0.2.0
-librosa==0.10.1
+librosa>=0.10.0
 
 # File handling
-aiofiles==23.2.1
-python-multipart==0.0.6
+aiofiles>=23.0.0
+python-multipart>=0.0.6
 
-# Future storage (Milestone 5)
-sqlalchemy==2.0.23
-aiosqlite==0.19.0
+# Database
+sqlalchemy>=2.0.0
 
-# Testing
-pytest==7.4.3
-pytest-asyncio==0.21.1
-httpx==0.25.1
+# HTTP client
+httpx>=0.25.0
 
 # Development
-python-dotenv==1.0.0
+python-dotenv>=1.0.0
+
+# Note: openai-whisper removed due to build issues
+# We use transformers + NB-Whisper models directly instead

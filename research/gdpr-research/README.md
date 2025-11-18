@@ -80,10 +80,35 @@ The findings from this research project directly informed the strategic decision
 - **Models**: NB-Llama (~16GB RAM), NB-Whisper (1.5GB)
 - **Cost**: 0 EUR infrastructure during validation phase
 
-### Running the Research Code
+### 🚀 Quick Start (Easy Setup)
+
+### One-Command Setup
 ```bash
-pip install -r requirements.txt
-python -m app.main  # Start FastAPI server
+make setup    # Set up everything (virtual env + dependencies)
+make run      # Start the server
+```
+
+### Alternative: Manual Setup
+```bash
+chmod +x setup.sh && ./setup.sh    # Set up everything
+chmod +x run.sh && ./run.sh         # Start the server
+```
+
+### Available Commands
+```bash
+make help          # Show all available commands
+make setup         # Initial setup (create venv, install dependencies)
+make run           # Start the research server
+make clean         # Clean up virtual environment
+make test          # Test the running server
+make health        # Check server health
+make install-ollama # Install Ollama and Norwegian model
+```
+
+## Running the Research Code (Manual)
+```bash
+source venv/bin/activate
+uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 ## Future Considerations
