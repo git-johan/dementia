@@ -1,0 +1,23 @@
+  # Key questions
+
+  [ ] Hvordan håndterer vi sensitiv persondata i en AI-verden?
+    [x] Vi bruker self-hosted, norske AI-modeller
+    [x] Transcriptions: nb-whisperer er en norsk språkmodell utviklet av Nasjonalbilio spesifikt for å transkribere tekst (lyd til bilde). Testet og verifisert.
+    [x] LLM: nb-llama
+  [ ] Hvordan får vi personalisert informasjon inn i databasen?
+  [ ] Hvordan henter setter vi opp AI for å hente ut data/informasjon fra lokal kontekst? (Tekst, lyd, bilde)
+  [ ] Hvor gode er on-device llm modellene?
+  [ ] Hvor mye koster det å kjøre AI på egen server?
+    [x] Create AI draft (docs/technical-research/2025-11-17-comprehensive-ai-cost-analysis.md)
+    [ ] Verify the insights in the document
+  [ ] Hvordan gjør vi lydopptak gjennom mikrofon på telefonen og sender til serveren?
+  [ ] Hvordan gjør vi assistenten stemmestyrt?
+
+  [ ] Hvordan organiserer vi informasjonen for at RAG skal klare å hente frem riktig info raskt?
+  [ ] Hvordan gjør vi interaksjonen menneskelig og ekte?
+  [ ] Hvordan gjør vi det troverdig?
+  [x] Hvilken modell fungerer best som samtalepartner på norsk?
+  * Det er stort spenn i hvilke modeller som fungerer bra på norsk. Her må vi mest sannsynlig svelge noen kameler – eller investere ekstremt mye tid.
+
+  # Conclusions
+  * We are using OpenAI models for the conversations. We need the assistant to be empathetic and trustworthy. No open-source models can compare, even close. And the commercial models are moving much faster because it's so extremely expensive to train and maintain them.

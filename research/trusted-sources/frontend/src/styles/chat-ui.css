@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Set root font size for consistent rem-based sizing */
+  html {
+    font-size: 16px; /* Makes 1rem = 16px throughout the app */
+    background-color: #ffffff;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    html {
+      font-size: 16px; /* Maintain root font size in dark mode */
+      background-color: #111827; /* gray-900 */
+    }
+  }
+
+  body {
+    background-color: #ffffff;
+    color: #111827; /* gray-900 */
+  }
+
+  @media (prefers-color-scheme: dark) {
+    body {
+      background-color: #111827; /* gray-900 */
+      color: #f9fafb; /* gray-50 */
+    }
+  }
+
+  /* Base styles for the chat interface */
+  .chat-container {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Compact Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  /* Hide scrollbars but keep functionality */
+  .chat-scrollable {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .chat-scrollable::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Smooth scrolling for chat messages */
+  .chat-messages {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  /* Typing indicator dots animation */
+  .typing-dot {
+    animation: bounceDots 1.4s infinite ease-in-out both;
+  }
+
+  .typing-dot:nth-child(1) {
+    animation-delay: -0.32s;
+  }
+
+  .typing-dot:nth-child(2) {
+    animation-delay: -0.16s;
+  }
+
+  /* Sequential typing dots animation */
+  .typing-period {
+    animation: typingDots 2s infinite ease-in-out;
+    opacity: 0;
+  }
+
+  .typing-period:nth-child(1) {
+    animation-delay: 0s;
+  }
+
+  .typing-period:nth-child(2) {
+    animation-delay: 0.666s;
+  }
+
+  .typing-period:nth-child(3) {
+    animation-delay: 1.333s;
+  }
+
+  /* Auto-resizing textarea */
+  .chat-input {
+    resize: none;
+    overflow: hidden;
+    min-height: 44px;
+    max-height: 200px;
+    line-height: 1.5;
+  }
+
+  /* Fix prose font size consistency in chat messages */
+  /* Ensure assistant message prose content matches text-sm (14px) used in caretaker messages */
+  .prose p,
+  .prose ul,
+  .prose ol,
+  .prose li {
+    font-size: 0.875rem; /* Same as text-sm - ensures consistency with caretaker messages */
+  }
+
+  /* Also ensure code blocks and inline code inherit the correct size */
+  .prose code:not(pre code) {
+    font-size: 0.8125rem; /* Slightly smaller than paragraph text for inline code */
+  }
+
+  .prose pre code {
+    font-size: 0.8125rem; /* Consistent code block font size */
+  }
+}

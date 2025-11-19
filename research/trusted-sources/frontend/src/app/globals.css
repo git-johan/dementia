@@ -1,0 +1,6 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import ai-chat-ui styles */
+@import '../styles/chat-ui.css';

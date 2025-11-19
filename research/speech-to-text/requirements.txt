@@ -1,0 +1,21 @@
+# Core FastAPI stack
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.4.0
+pydantic-settings>=2.0.0
+
+# Norwegian Speech Recognition models
+transformers>=4.35.0
+torch>=2.1.0
+
+# Audio processing
+librosa>=0.10.0
+
+# File handling for audio uploads
+aiofiles>=23.0.0
+python-multipart>=0.0.6
+
+# Configuration management
+python-dotenv>=1.0.0
+
+# Note: Using transformers + NB-Whisper models directly for Norwegian speech recognition
