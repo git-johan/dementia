@@ -2,7 +2,7 @@ import time
 import logging
 from fastapi import APIRouter, HTTPException
 from app.models.chat import ChatRequest, ChatResponse, ErrorResponse
-from app.services.openai_service import openai_service
+from app.services.openai_service import get_openai_service
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -34,7 +34,8 @@ async def chat_with_gpt5(request: ChatRequest):
 
         logger.info(f"Processing chat request for user {request.user_id}")
 
-        # Get response from GPT-5
+        # Get response from GPT-5 - lazy load the service
+        openai_service = get_openai_service()
         response_text = openai_service.get_chat_response(
             user_message=request.message.strip(),
             user_id=request.user_id

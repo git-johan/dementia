@@ -1,4 +1,5 @@
 import os
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
@@ -7,11 +8,29 @@ from app.routes.chat import chat_router
 # Load environment variables from .env file
 load_dotenv()
 
+# Configure logging for production
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler()  # Railway will capture stdout logs
+    ]
+)
+
+# Get logger for this module
+logger = logging.getLogger(__name__)
+
 app = FastAPI(
     title="Trusted Sources - Dementia Care API",
     description="Backend API for Norwegian dementia care conversations using GPT-5",
     version="0.1.0",
 )
+
+# Log startup information
+logger.info("Starting Trusted Sources API...")
+logger.info(f"Environment: {os.getenv('RAILWAY_ENVIRONMENT', 'local')}")
+logger.info(f"Port: {os.getenv('PORT', 'not set')}")
+logger.info(f"OpenAI API key present: {bool(os.getenv('OPENAI_API_KEY'))}")
 
 # Get environment-specific CORS origins
 def get_cors_origins():
@@ -72,7 +91,33 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    """Simple health check endpoint for Railway deployment."""
+    import time
+    return {
+        "status": "healthy",
+        "timestamp": int(time.time() * 1000),
+        "service": "trusted-sources-backend",
+        "version": "0.1.0"
+    }
+
+@app.get("/debug/env")
+async def debug_env():
+    """Debug endpoint to check environment configuration."""
+    import time
+    return {
+        "timestamp": int(time.time() * 1000),
+        "environment": {
+            "port": os.getenv("PORT", "Not set"),
+            "openai_key_present": bool(os.getenv("OPENAI_API_KEY")),
+            "railway_environment": os.getenv("RAILWAY_ENVIRONMENT", "Not set"),
+            "python_path": os.getenv("PYTHONPATH", "Not set"),
+            "node_env": os.getenv("NODE_ENV", "Not set")
+        },
+        "service_status": {
+            "fastapi": "running",
+            "openai_service": "not_initialized"
+        }
+    }
 
 if __name__ == "__main__":
     import uvicorn

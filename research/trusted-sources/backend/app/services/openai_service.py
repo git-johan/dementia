@@ -69,5 +69,12 @@ Keep responses warm, supportive, and practical. Focus on emotional support, prac
             # Re-raise the error (no fallbacks as requested)
             raise error
 
-# Global service instance
-openai_service = OpenAIService()
+# Global service instance - lazy initialization
+_openai_service_instance = None
+
+def get_openai_service() -> OpenAIService:
+    """Get the OpenAI service instance, creating it if it doesn't exist."""
+    global _openai_service_instance
+    if _openai_service_instance is None:
+        _openai_service_instance = OpenAIService()
+    return _openai_service_instance

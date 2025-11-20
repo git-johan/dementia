@@ -23,24 +23,51 @@ AI is at the center of our research and development practices. This folder is tr
 - Company wide documents, policies, and procedures
 - Its main purpose is to keep the team (and AI) focused on the core mission
 
-- **[VISION.md](VISION.md)** - Why we exist and what we're achieving
-- **[PRODUCT.md](PRODUCT.md)** - What we're currently building
+- **[VISION.md](company/VISION.md)** - Why we exist and what we're achieving
+- **[PRODUCT.md](company/PRODUCT.md)** - What we're currently building
 - **[Research](research/)** - Technical foundation and findings
 
 ## Research
 - Each project should answer a core question
 - Each project should have a README.md file with a brief description and links to relevant resources
-- Research code/services is deployed to Railway via separate research branches
+- **Git workflow**: Create research branches (`research/project-name-YYYYMMDD`) for experiments
+- **Railway deployment**: Research branches automatically deploy to temporary environments
+- **Graduation**: Copy learnings to development folder, rewrite clean code
 - You can (and should) use the development/production APIs as you wish
 
 ## Development
 - Code should be modular, reusable, and testable
 - APIs should be designed to be easily used by research projects
 - Development code can be used to prototype new features and test ideas before moving them to production, but code should be reviewed and tested before being merged into the main branch.
-- TBD: Git strategy. One repo for development? One repo per service? 
+- **Git strategy**: One repo with clean main branch, copy & rewrite approach from research to development 
 
 ## Production
 - TBA. We are using development for the time being.
+
+## Git Workflow (AI-Friendly)
+
+### Simple Branch Strategy
+- **One main branch**: All clean, working code
+- **Research branches**: `research/experiment-name-YYYYMMDD` for AI experiments
+- **Feature branches**: `feature/feature-name` for development work
+
+### Research Workflow
+1. **Start experiment**: `git checkout -b research/voice-ui-20241120`
+2. **AI development**: Work in `research/` folder, crap code allowed
+3. **Railway deployment**: Push branch → automatic temporary deployment
+4. **Copy & rewrite**: Move learnings to `development/` folder with clean code
+5. **Cleanup**: Delete research branch when done
+
+### Quality Gates
+- **Research → Development**: Physical folder move requires conscious rewriting
+- **Development → Main**: Code review and testing required
+- **Main → Production**: Manual deployment when ready
+
+### Railway Integration
+- Research branches deploy to temporary environments
+- Main branch deploys to development environment
+- Automatic cleanup when research branches are deleted
+- Environment variables managed through Railway dashboard
 
 
 
