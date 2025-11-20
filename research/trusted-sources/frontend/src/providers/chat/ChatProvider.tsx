@@ -31,7 +31,12 @@ export function ChatProvider({ children, llmProvider, className }: ChatProviderP
     if (typeof window !== 'undefined') {
       const savedMessages = loadMessages();
       if (savedMessages && savedMessages.length > 0) {
-        setMessages(savedMessages);
+        // Convert ChatMessage[] to Message[] (timestamp: number -> string)
+        const convertedMessages: Message[] = savedMessages.map(msg => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp).toISOString()
+        }));
+        setMessages(convertedMessages);
       }
     }
   }, []);
