@@ -1,8 +1,8 @@
 import time
 import logging
 from fastapi import APIRouter, HTTPException
-from app.models.chat import ChatRequest, ChatResponse, ErrorResponse
-from app.services.openai_service import get_openai_service
+from models.chat import ChatRequest, ChatResponse, ErrorResponse
+from services.openai_service import get_openai_service
 
 # Set up logging
 logger = logging.getLogger(__name__)
