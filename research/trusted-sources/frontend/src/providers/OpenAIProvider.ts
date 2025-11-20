@@ -1,7 +1,7 @@
 import { loadMessages, saveMessages, generateMessageId, type ChatMessage } from '../utils/messageStorage';
 
 // Configuration
-const BACKEND_URL = 'http://localhost:8000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const CHAT_ENDPOINT = `${BACKEND_URL}/api/v1/chat`;
 
 export class OpenAIProvider {

@@ -16,7 +16,7 @@ const nextConfig = {
               "font-src 'self' https://fonts.gstatic.com data:",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
-              "connect-src 'self' http://localhost:8000 ws://localhost:3001 https://api.openai.com",
+              "connect-src 'self' http://localhost:8000 ws://localhost:3001 https://api.openai.com https://*.railway.app",
               "img-src 'self' data: blob:",
             ].join('; '),
           },
