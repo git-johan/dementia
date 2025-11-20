@@ -54,7 +54,6 @@ config/secrets.json
 secrets/
 
 # Model files and cache
-models/
 cache/
 .cache/
 huggingface_cache/
