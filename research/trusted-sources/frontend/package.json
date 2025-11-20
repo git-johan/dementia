@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:prod": "npm run build && npm run start"
   },
   "dependencies": {
     "@tailwindcss/typography": "^0.5.19",
