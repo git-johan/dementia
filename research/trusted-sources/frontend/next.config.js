@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Remove deprecated appDir setting - it's now stable in Next.js 14
-  transpilePackages: ['ai-chat-ui'],
 
   // Add headers for CSP to allow font loading
   async headers() {
