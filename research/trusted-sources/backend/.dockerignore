@@ -41,10 +41,10 @@ logs/
 .gitignore
 
 # Build artifacts
-.nixpacks/
 node_modules/
 dist/
 build/
+# Note: .nixpacks/ is needed by Railway
 
 # Development
 README.md
