@@ -29,8 +29,7 @@ export function ChatProvider({ children, llmProvider, className }: ChatProviderP
   // Load messages from localStorage on mount (client-side only)
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const userId = getUserId();
-      const savedMessages = loadMessages(userId);
+      const savedMessages = loadMessages();
       if (savedMessages && savedMessages.length > 0) {
         setMessages(savedMessages);
       }
