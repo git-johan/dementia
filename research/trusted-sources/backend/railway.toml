@@ -15,9 +15,7 @@ numReplicas = 1
 
 # Environment variables for Railway deployment
 [environments.production.variables]
-PORT = "8000"
-PYTHONPATH = "/app"
+PYTHONPATH = "/app/app"
 
 [environments.development.variables]
-PORT = "8000"
-PYTHONPATH = "/app"
+PYTHONPATH = "/app/app"
