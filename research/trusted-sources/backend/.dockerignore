@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Local env files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Git (important!)
+.git/
+.gitignore
+
+# Build artifacts
+.nixpacks/
+node_modules/
+dist/
+build/
+
+# Development
+README.md
+*.md
+tests/
+test_*/
+
+# Railway specific
+railway.toml.bak
