@@ -14,8 +14,7 @@ numReplicas = 2
 numReplicas = 1
 
 # Environment variables for Railway deployment
+# Let Railway auto-detect Python path
 [environments.production.variables]
-PYTHONPATH = "/app"
 
 [environments.development.variables]
-PYTHONPATH = "/app"
