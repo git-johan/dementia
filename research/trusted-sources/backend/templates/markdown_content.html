@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Markdown Content - {{ url_record.domain }}</title>
+    <meta charset="UTF-8">
+    <style>
+        .content { font-family: 'Courier New', monospace; line-height: 1.5; background: #f8f9fa; padding: 20px; border: 1px solid #ddd; white-space: pre-wrap; }
+        .rendered-content { font-family: Arial, sans-serif; line-height: 1.6; background: #ffffff; padding: 20px; border: 1px solid #ddd; }
+        .header { background: #e7f3ff; padding: 10px; border: 1px solid #b3d9ff; margin-bottom: 20px; }
+        .back-link { margin: 20px 0; }
+        a { color: blue; text-decoration: underline; }
+        .metadata { background: #f0f8ff; padding: 15px; border: 1px solid #cce7ff; margin-bottom: 20px; }
+        .chunks { margin-bottom: 30px; }
+        .chunk { background: #f9f9f9; border: 1px solid #ddd; margin-bottom: 15px; padding: 15px; border-radius: 5px; }
+        .chunk-header { background: #e9ecef; padding: 8px; margin: -15px -15px 10px -15px; border-radius: 5px 5px 0 0; font-weight: bold; font-size: 14px; }
+        .chunk-content { font-family: 'Courier New', monospace; background: #f8f9fa; padding: 10px; border-radius: 3px; white-space: pre-wrap; }
+        .toggle-btn { background: #007bff; color: white; border: none; padding: 8px 16px; margin: 10px 5px; cursor: pointer; border-radius: 4px; }
+        .toggle-btn:hover { background: #0056b3; }
+        .section { margin-bottom: 30px; }
+    </style>
+    <script>
+        function toggleView(type) {
+            document.getElementById('markdown-raw').style.display = type === 'raw' ? 'block' : 'none';
+            document.getElementById('markdown-rendered').style.display = type === 'rendered' ? 'block' : 'none';
+            document.getElementById('chunks-section').style.display = type === 'chunks' ? 'block' : 'none';
+
+            // Update button styles
+            const buttons = document.querySelectorAll('.toggle-btn');
+            buttons.forEach(btn => btn.style.background = '#6c757d');
+            document.getElementById(type + '-btn').style.background = '#007bff';
+        }
+    </script>
+</head>
+<body>
+    <div class="back-link">
+        <a href="/api/v1/trusted-sources/urls">&larr; Back to URL List</a>
+    </div>
+
+    <h1>Markdown Content</h1>
+
+    <div class="header">
+        <h2>URL Information</h2>
+        <p><strong>URL:</strong> <a href="{{ url_record.url }}" target="_blank">{{ url_record.url }}</a></p>
+        <p><strong>Domain:</strong> {{ url_record.domain }}</p>
+        <p><strong>Status:</strong> {{ url_record.status.value }}</p>
+        <p><strong>Collected:</strong> {{ url_record.collected_at.strftime('%Y-%m-%d %H:%M:%S') if url_record.collected_at else 'N/A' }}</p>
+        <p><strong>Scraped:</strong> {{ url_record.scraped_at.strftime('%Y-%m-%d %H:%M:%S') if url_record.scraped_at else 'N/A' }}</p>
+        {% if url_record.error_message %}
+        <p><strong>Error:</strong> <span style="color: red;">{{ url_record.error_message }}</span></p>
+        {% endif %}
+    </div>
+
+    {% if markdown_content %}
+    <div class="metadata">
+        <h2>Markdown Information</h2>
+        <p><strong>Content ID:</strong> {{ markdown_content.id }}</p>
+        <p><strong>Markdown Length:</strong> {{ markdown_content.markdown|length if markdown_content.markdown else 'Unknown' }} characters</p>
+        <p><strong>Converted At:</strong> {{ markdown_content.converted_at.strftime('%Y-%m-%d %H:%M:%S') if markdown_content.converted_at else 'N/A' }}</p>
+        <p><strong>Extracted Content ID:</strong> {{ markdown_content.extracted_content_id }}</p>
+        {% if markdown_content.content_metadata %}
+        <p><strong>Metadata:</strong> {{ markdown_content.content_metadata }}</p>
+        {% endif %}
+        {% if markdown_content.chunk_count %}
+        <p><strong>Total Chunks:</strong> {{ markdown_content.chunk_count }}</p>
+        {% endif %}
+    </div>
+
+    <div class="section">
+        <h2>View Options</h2>
+        <button id="raw-btn" class="toggle-btn" onclick="toggleView('raw')">Raw Markdown</button>
+        <button id="rendered-btn" class="toggle-btn" onclick="toggleView('rendered')" style="background: #6c757d;">Rendered View</button>
+        <button id="chunks-btn" class="toggle-btn" onclick="toggleView('chunks')" style="background: #6c757d;">Semantic Chunks</button>
+    </div>
+
+    <div id="markdown-raw" class="section">
+        <h2>Raw Markdown</h2>
+        <div class="content">{{ markdown_content.markdown if markdown_content.markdown else 'No markdown content available' }}</div>
+    </div>
+
+    <div id="markdown-rendered" class="section" style="display: none;">
+        <h2>Rendered View</h2>
+        <div class="rendered-content">
+            {% if markdown_content.markdown %}
+            {{ markdown_content.markdown | safe }}
+            {% else %}
+            <p>No markdown content available to render</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div id="chunks-section" class="section" style="display: none;">
+        <h2>Semantic Chunks ({{ markdown_content.chunk_count if markdown_content.chunk_count else 0 }})</h2>
+        {% if markdown_content.chunks %}
+        <div class="chunks">
+            {% for chunk in markdown_content.chunks %}
+            <div class="chunk">
+                <div class="chunk-header">
+                    Chunk {{ loop.index }}
+                    ({{ chunk.content|length }} chars)
+                    {% if chunk.chunk_type %} - {{ chunk.chunk_type|title }}{% endif %}
+                </div>
+                <div class="chunk-content">{{ chunk.content }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p>No semantic chunks found for this content.</p>
+        {% endif %}
+    </div>
+
+    {% else %}
+    <p><strong>No markdown content found for this URL.</strong></p>
+    <p>This may mean:</p>
+    <ul>
+        <li>The content hasn't been converted to markdown yet</li>
+        <li>The conversion process failed</li>
+        <li>No extracted content was available to convert</li>
+        <li>The content was too short or couldn't be processed</li>
+    </ul>
+    {% endif %}
+
+    <div class="back-link">
+        <a href="/api/v1/trusted-sources/urls">&larr; Back to URL List</a>
+        {% if markdown_content %}
+        | <a href="/api/v1/trusted-sources/urls/{{ url_record.id }}/raw">View Raw Content</a>
+        | <a href="/api/v1/trusted-sources/urls/{{ url_record.id }}/extracted">View Extracted Content</a>
+        {% endif %}
+    </div>
+
+    <hr>
+    <p><small>Trusted Sources API - Markdown Content Viewer</small></p>
+</body>
+</html>

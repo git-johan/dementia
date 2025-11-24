@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Raw Content - {{ url_record.domain }}</title>
+    <meta charset="UTF-8">
+    <style>
+        .content { font-family: monospace; white-space: pre-wrap; background: #f5f5f5; padding: 10px; border: 1px solid #ddd; }
+        .header { background: #e9e9e9; padding: 10px; border: 1px solid #ddd; margin-bottom: 20px; }
+        .back-link { margin: 20px 0; }
+        a { color: blue; text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="back-link">
+        <a href="/api/v1/trusted-sources/urls">&larr; Back to URL List</a>
+    </div>
+
+    <h1>Raw Content</h1>
+
+    <div class="header">
+        <h2>URL Information</h2>
+        <p><strong>URL:</strong> <a href="{{ url_record.url }}" target="_blank">{{ url_record.url }}</a></p>
+        <p><strong>Domain:</strong> {{ url_record.domain }}</p>
+        <p><strong>Status:</strong> {{ url_record.status.value }}</p>
+        <p><strong>Collected:</strong> {{ url_record.collected_at.strftime('%Y-%m-%d %H:%M:%S') if url_record.collected_at else 'N/A' }}</p>
+        <p><strong>Scraped:</strong> {{ url_record.scraped_at.strftime('%Y-%m-%d %H:%M:%S') if url_record.scraped_at else 'N/A' }}</p>
+        {% if url_record.error_message %}
+        <p><strong>Error:</strong> <span style="color: red;">{{ url_record.error_message }}</span></p>
+        {% endif %}
+    </div>
+
+    {% if raw_content %}
+    <div class="header">
+        <h2>Raw Content Information</h2>
+        <p><strong>Content ID:</strong> {{ raw_content.id }}</p>
+        <p><strong>Size:</strong> {{ raw_content.size_bytes if raw_content.size_bytes else 'Unknown' }} bytes</p>
+        <p><strong>Scraped At:</strong> {{ raw_content.scraped_at.strftime('%Y-%m-%d %H:%M:%S') if raw_content.scraped_at else 'N/A' }}</p>
+    </div>
+
+    <h2>Raw HTML Content</h2>
+    <div class="content">{{ raw_content.html if raw_content.html else 'No HTML content available' }}</div>
+
+    {% if raw_content.headers %}
+    <h2>HTTP Headers</h2>
+    <div class="content">{{ raw_content.headers }}</div>
+    {% endif %}
+
+    {% else %}
+    <p><strong>No raw content found for this URL.</strong></p>
+    <p>This may mean:</p>
+    <ul>
+        <li>The URL hasn't been scraped yet</li>
+        <li>The scraping failed</li>
+        <li>The content was not stored</li>
+    </ul>
+    {% endif %}
+
+    <div class="back-link">
+        <a href="/api/v1/trusted-sources/urls">&larr; Back to URL List</a>
+        {% if raw_content %}
+        | <a href="/api/v1/trusted-sources/urls/{{ url_record.id }}/cleaned">View Cleaned Content</a>
+        {% endif %}
+    </div>
+
+    <hr>
+    <p><small>Trusted Sources API - Raw Content Viewer</small></p>
+</body>
+</html>

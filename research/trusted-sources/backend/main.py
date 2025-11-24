@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from routes.chat import chat_router
+from routes.trusted_sources import trusted_sources_router
 
 # Load environment variables from .env file
 load_dotenv()
@@ -80,6 +81,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(chat_router, prefix="/api/v1", tags=["chat"])
+app.include_router(trusted_sources_router, prefix="/api/v1/trusted-sources", tags=["trusted-sources"])
 
 @app.get("/")
 async def root():

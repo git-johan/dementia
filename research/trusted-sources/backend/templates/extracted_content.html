@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Extracted Content - {{ url_record.domain }}</title>
+    <meta charset="UTF-8">
+    <style>
+        .content { font-family: Arial, sans-serif; line-height: 1.6; background: #f9f9f9; padding: 20px; border: 1px solid #ddd; }
+        .header { background: #e9f3ff; padding: 10px; border: 1px solid #b8d4f0; margin-bottom: 20px; }
+        .back-link { margin: 20px 0; }
+        a { color: blue; text-decoration: underline; }
+        .title { font-size: 1.2em; font-weight: bold; margin-bottom: 10px; }
+        .metadata { background: #f0f8ff; padding: 15px; border: 1px solid #cce7ff; margin-bottom: 20px; }
+        .structure-features { display: flex; gap: 10px; margin-top: 10px; }
+        .feature { background: #d4edda; color: #155724; padding: 3px 8px; border-radius: 3px; font-size: 12px; }
+        .feature.false { background: #f8d7da; color: #721c24; }
+        .score { font-weight: bold; color: #0066cc; }
+    </style>
+</head>
+<body>
+    <div class="back-link">
+        <a href="/api/v1/trusted-sources/urls">&larr; Back to URL List</a>
+    </div>
+
+    <h1>Extracted Content</h1>
+
+    <div class="header">
+        <h2>URL Information</h2>
+        <p><strong>URL:</strong> <a href="{{ url_record.url }}" target="_blank">{{ url_record.url }}</a></p>
+        <p><strong>Domain:</strong> {{ url_record.domain }}</p>
+        <p><strong>Status:</strong> {{ url_record.status.value }}</p>
+        <p><strong>Collected:</strong> {{ url_record.collected_at.strftime('%Y-%m-%d %H:%M:%S') if url_record.collected_at else 'N/A' }}</p>
+        <p><strong>Scraped:</strong> {{ url_record.scraped_at.strftime('%Y-%m-%d %H:%M:%S') if url_record.scraped_at else 'N/A' }}</p>
+        {% if url_record.error_message %}
+        <p><strong>Error:</strong> <span style="color: red;">{{ url_record.error_message }}</span></p>
+        {% endif %}
+    </div>
+
+    {% if extracted_content %}
+    <div class="metadata">
+        <h2>Extraction Information</h2>
+        <p><strong>Content ID:</strong> {{ extracted_content.id }}</p>
+        <p><strong>Content Length:</strong> {{ extracted_content.content|length if extracted_content.content else 'Unknown' }} characters</p>
+        <p><strong>Extracted At:</strong> {{ extracted_content.extracted_at.strftime('%Y-%m-%d %H:%M:%S') if extracted_content.extracted_at else 'N/A' }}</p>
+        <p><strong>Raw Content ID:</strong> {{ extracted_content.raw_content_id }}</p>
+        <p><strong>Structure Score:</strong> <span class="score">{{ "%.2f"|format(extracted_content.structure_score) if extracted_content.structure_score else 'N/A' }}</span></p>
+
+        <div class="structure-features">
+            <span class="feature {% if not extracted_content.has_tables %}false{% endif %}">
+                {% if extracted_content.has_tables %}✓{% else %}✗{% endif %} Tables
+            </span>
+            <span class="feature {% if not extracted_content.has_lists %}false{% endif %}">
+                {% if extracted_content.has_lists %}✓{% else %}✗{% endif %} Lists
+            </span>
+            <span class="feature {% if not extracted_content.has_headings %}false{% endif %}">
+                {% if extracted_content.has_headings %}✓{% else %}✗{% endif %} Headings
+            </span>
+            <span class="feature {% if not extracted_content.has_links %}false{% endif %}">
+                {% if extracted_content.has_links %}✓{% else %}✗{% endif %} Links
+            </span>
+        </div>
+    </div>
+
+    {% if extracted_content.title %}
+    <h2>Extracted Title</h2>
+    <div class="title">{{ extracted_content.title }}</div>
+    {% endif %}
+
+    {% if extracted_content.author %}
+    <h2>Author</h2>
+    <div>{{ extracted_content.author }}</div>
+    {% endif %}
+
+    {% if extracted_content.date_published %}
+    <h2>Date Published</h2>
+    <div>{{ extracted_content.date_published.strftime('%Y-%m-%d') if extracted_content.date_published else 'N/A' }}</div>
+    {% endif %}
+
+    <h2>Extracted Content</h2>
+    <div class="content">{{ extracted_content.content if extracted_content.content else 'No extracted content available' }}</div>
+
+    {% else %}
+    <p><strong>No extracted content found for this URL.</strong></p>
+    <p>This may mean:</p>
+    <ul>
+        <li>The content hasn't been extracted yet</li>
+        <li>The extraction process failed</li>
+        <li>No raw content was available to extract from</li>
+        <li>The content was too short or detected as boilerplate</li>
+    </ul>
+    {% endif %}
+
+    <div class="back-link">
+        <a href="/api/v1/trusted-sources/urls">&larr; Back to URL List</a>
+        {% if extracted_content %}
+        | <a href="/api/v1/trusted-sources/urls/{{ url_record.id }}/raw">View Raw Content</a>
+        | <a href="/api/v1/trusted-sources/urls/{{ url_record.id }}/markdown">View Markdown</a>
+        {% endif %}
+    </div>
+
+    <hr>
+    <p><small>Trusted Sources API - Extracted Content Viewer</small></p>
+</body>
+</html>

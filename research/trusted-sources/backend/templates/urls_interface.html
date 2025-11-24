@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trusted Sources - URL Management</title>
+    <meta charset="UTF-8">
+    <style>
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        a { color: blue; text-decoration: underline; }
+        .status-pending { color: orange; }
+        .status-scraped { color: green; }
+        .status-extracted { color: blue; }
+        .status-converted { color: purple; }
+        .status-failed { color: red; }
+        .pipeline-stage {
+            display: inline-block;
+            padding: 2px 6px;
+            margin: 1px;
+            border-radius: 3px;
+            font-size: 11px;
+            text-decoration: none;
+        }
+        .stage-completed { background: #d4edda; color: #155724; }
+        .stage-pending { background: #fff3cd; color: #856404; }
+        .stage-failed { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Trusted Sources - URL Management</h1>
+
+    {% if specific_job %}
+    <h2>Job Details</h2>
+    <div style="background: #e9f3ff; padding: 15px; border: 1px solid #b8d4f0; margin-bottom: 20px;">
+        <h3>{{ specific_job.id }}</h3>
+        <p><strong>Domain:</strong> {{ specific_job.domain }}</p>
+        <p><strong>Type:</strong> {{ specific_job.job_type.value }}</p>
+        <p><strong>Status:</strong> <span class="status-{{ specific_job.status.value }}">{{ specific_job.status.value }}</span></p>
+        <p><strong>Progress:</strong> {{ specific_job.processed_count }}/{{ specific_job.total_urls or '?' }} URLs</p>
+        {% if specific_job.total_urls %}
+            <p><strong>Completion:</strong> {{ (specific_job.processed_count / specific_job.total_urls * 100) | round(1) }}%</p>
+        {% endif %}
+        <p><strong>Failed:</strong> {{ specific_job.failed_count }}</p>
+        <p><strong>Started:</strong> {{ specific_job.started_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+        {% if specific_job.completed_at %}
+            <p><strong>Completed:</strong> {{ specific_job.completed_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+        {% endif %}
+        {% if specific_job.error_message %}
+            <p><strong>Error:</strong> <span style="color: red;">{{ specific_job.error_message }}</span></p>
+        {% endif %}
+        {% if specific_job.limit %}
+            <p><strong>Test Mode:</strong> Limited to {{ specific_job.limit }} items</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if recent_jobs %}
+    <h2>Recent Jobs</h2>
+    <div style="background: #f8f9fa; padding: 15px; border: 1px solid #ddd; margin-bottom: 20px;">
+        {% for job in recent_jobs[:5] %}
+        <p>
+            <strong>[{{ job.status.value | upper }}]</strong>
+            {{ job.job_type.value | title }} {{ job.domain }}:
+            {{ job.processed_count }}/{{ job.total_urls or '?' }}
+            {% if job.total_urls %}({{ (job.processed_count / job.total_urls * 100) | round(0) }}%){% endif %}
+            - <a href="/api/v1/trusted-sources/urls?job_id={{ job.id }}">{{ job.id }}</a>
+            {% if job.status.value == 'running' %}<span style="color: orange;"> ⚡ Active</span>{% endif %}
+            {% if job.failed_count > 0 %}<span style="color: red;"> ({{ job.failed_count }} failed)</span>{% endif %}
+        </p>
+        {% endfor %}
+        {% if recent_jobs | length > 5 %}
+            <p><em>Showing 5 of {{ recent_jobs | length }} recent jobs</em></p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <h2>Summary</h2>
+    <p>Total URLs: {{ total_urls }}</p>
+    {% if current_domain %}
+        <p>Filtered by domain: {{ current_domain }}</p>
+    {% endif %}
+    {% if current_status %}
+        <p>Filtered by status: {{ current_status }}</p>
+    {% endif %}
+    {% if current_job_id %}
+        <p>Showing job: {{ current_job_id }} | <a href="/api/v1/trusted-sources/urls">View all URLs</a></p>
+    {% endif %}
+
+    <h2>Filters</h2>
+    <div style="background: #f9f9f9; padding: 15px; border: 1px solid #ddd; margin-bottom: 20px;">
+        <form method="get" action="/api/v1/trusted-sources/urls" style="display: flex; gap: 15px; align-items: end;">
+            <div>
+                <label for="domain" style="display: block; margin-bottom: 5px;"><strong>Domain:</strong></label>
+                <select name="domain" id="domain" style="padding: 5px;">
+                    <option value="">All domains</option>
+                    {% for domain in available_domains %}
+                    <option value="{{ domain.domain }}" {% if current_domain == domain.domain %}selected{% endif %}>
+                        {{ domain.domain }}
+                        {% if domain.category %}({{ domain.category.value | title }}){% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="status" style="display: block; margin-bottom: 5px;"><strong>Status:</strong></label>
+                <select name="status" id="status" style="padding: 5px;">
+                    <option value="">All statuses</option>
+                    <option value="pending" {% if current_status == "pending" %}selected{% endif %}>Pending</option>
+                    <option value="scraped" {% if current_status == "scraped" %}selected{% endif %}>Scraped</option>
+                    <option value="extracted" {% if current_status == "extracted" %}selected{% endif %}>Extracted</option>
+                    <option value="converted" {% if current_status == "converted" %}selected{% endif %}>Converted</option>
+                    <option value="failed" {% if current_status == "failed" %}selected{% endif %}>Failed</option>
+                </select>
+            </div>
+            <div>
+                <button type="submit" style="padding: 6px 12px; background: #007bff; color: white; border: none; cursor: pointer;">Filter</button>
+            </div>
+            <div>
+                <a href="/api/v1/trusted-sources/urls" style="padding: 6px 12px; background: #6c757d; color: white; text-decoration: none; display: inline-block;">Clear</a>
+            </div>
+        </form>
+    </div>
+
+    <h2>URLs</h2>
+
+    {% if urls %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>URL</th>
+                <th>Domain</th>
+                <th>Status</th>
+                <th>Collected At</th>
+                <th>Scraped At</th>
+                <th>Pipeline Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for url in urls %}
+            <tr>
+                <td>{{ url.id }}</td>
+                <td>
+                    <a href="{{ url.url }}" target="_blank">{{ url.url[:80] }}{% if url.url|length > 80 %}...{% endif %}</a>
+                </td>
+                <td>{{ url.domain }}</td>
+                <td class="status-{{ url.status.value }}">{{ url.status.value }}</td>
+                <td>{{ url.collected_at.strftime('%Y-%m-%d %H:%M') if url.collected_at else 'N/A' }}</td>
+                <td>{{ url.scraped_at.strftime('%Y-%m-%d %H:%M') if url.scraped_at else 'N/A' }}</td>
+                <td>
+                    <!-- Raw Content Stage -->
+                    {% if url.status.value in ['scraped', 'extracted', 'converted'] %}
+                        <a href="/api/v1/trusted-sources/urls/{{ url.id }}/raw" class="pipeline-stage stage-completed">✓ RAW</a>
+                    {% elif url.status.value == 'failed' %}
+                        <span class="pipeline-stage stage-failed">✗ RAW</span>
+                    {% else %}
+                        <span class="pipeline-stage stage-pending">⏳ RAW</span>
+                    {% endif %}
+
+                    <!-- Extracted Content Stage -->
+                    {% if url.status.value in ['extracted', 'converted'] %}
+                        <a href="/api/v1/trusted-sources/urls/{{ url.id }}/extracted" class="pipeline-stage stage-completed">✓ EXTRACT</a>
+                    {% elif url.status.value in ['scraped'] %}
+                        <span class="pipeline-stage stage-pending">⏳ EXTRACT</span>
+                    {% else %}
+                        <span class="pipeline-stage stage-pending">— EXTRACT</span>
+                    {% endif %}
+
+                    <!-- Markdown Content Stage -->
+                    {% if url.status.value == 'converted' %}
+                        <a href="/api/v1/trusted-sources/urls/{{ url.id }}/markdown" class="pipeline-stage stage-completed">✓ MARKDOWN</a>
+                    {% elif url.status.value == 'extracted' %}
+                        <span class="pipeline-stage stage-pending">⏳ MARKDOWN</span>
+                    {% else %}
+                        <span class="pipeline-stage stage-pending">— MARKDOWN</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>No URLs found.</p>
+    {% endif %}
+
+    <h2>Navigation</h2>
+    <p>
+        {% if offset > 0 %}
+            <a href="/api/v1/trusted-sources/urls?limit={{ limit }}&offset={{ offset - limit }}">Previous</a>
+        {% endif %}
+        {% if urls and urls|length == limit %}
+            {% if offset > 0 %} | {% endif %}
+            <a href="/api/v1/trusted-sources/urls?limit={{ limit }}&offset={{ offset + limit }}">Next</a>
+        {% endif %}
+    </p>
+
+    <h2>Quick Actions</h2>
+    <ul>
+        <li><a href="/api/v1/trusted-sources/jobs">View Jobs</a></li>
+        <li><a href="/api/v1/trusted-sources/health">Health Check</a></li>
+    </ul>
+
+    <hr>
+    <p><small>Trusted Sources API - Minimal Interface</small></p>
+</body>
+</html>
